@@ -3,8 +3,9 @@ library(olsrr)
 ############################################################
 # WORKFLOW
 # 1. DETECT OUTLIERS
-# 2. BUILD, SUMMARIZE MODEL
-# 3. VARIABLE CONTRIBUTIONS: SHOULD WE ADD ANOTHER VARIABLE? 
+# 2. MEASURES OF INFLUENCE DIAGNOSTICS
+# 3. BUILD, SUMMARIZE MODEL
+# 4. VARIABLE CONTRIBUTIONS: SHOULD WE ADD ANOTHER VARIABLE? 
 ############################################################
 
 #####################################################################################
@@ -46,7 +47,85 @@ ols_dsrvsp_plot(model)
 
 
 #####################################################################################
-# 2. BUILD, SUMMARIZE MODEL
+# 2. MEASURES OF INFLUENCE DIAGNOSTICS
+# - Cook's D bar plot
+# - DFBETAs Panel
+# - Difference in Fits (DFFIT)
+# - Studentized Residuals vs Leverage plot
+# - Hadi plot
+#####################################################################################
+
+# -----------------------------------------------------------------------------------
+
+## COOK'S D BAR BLOT: identify influential data points in the model
+# -Takes into account both the x and y values of the observation, aka depends on both the
+#   residual & the leverage
+# Steps to compute:
+# 1. Delete observations one at a time
+# 2. refit the regression model on the remaining (n-1) observations
+# 3. Examine how much all of the fitted values change when the ith observation is deleted
+# -----------------------------------------------------------------------------------
+
+# cook's d bar chart
+model <- lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_cooksd_barplot(model)
+
+# cook's d chart: chart of cook's distance to detect observations that strongly influence
+#   fitted values of the model
+model <- lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_cooksd_chart(model)
+
+# -----------------------------------------------------------------------------------
+
+## DFBETAs Panel: Measures the difference in each parameter estimate, with and 
+#     without the influential point.
+# -If there are n observations and k variables, there will be n*k DFBETAs.
+# -Large DFBETA value indicates influential observation
+# -Belsey, Kuh, and Welsch recommend 2 as a general cutoff value to indicate influential
+#    observations, and 2/sqrt(n) as a size-adjusted cutoff
+# -----------------------------------------------------------------------------------
+
+# panel
+model <- lm(mpg ~ disp + hp + wt, data = mtcars)
+ols_dfbetas_panel(model)
+
+# -----------------------------------------------------------------------------------
+
+## DIFFERENCE IN FITS (DFFIT): USED TO IDENTIFY INFLUENTIAL DATA POINTS.
+# - The scaled difference between the ith fitted value from the full data,
+#     and the ith fitted value obtained by deleting the ith observation.
+# - STEPS TO COMPUTE:
+# - Delete observations one at a time
+# - Refit the regression model on the remaining observations
+# - Check how much the fitted values cahnge when the ith observation is deleted
+# AN OBSERVATION IS "INFLUENTIAL" IF ITS DFFITS IS GREATER THAN:
+# 2 * (sqrt(p + 1) / (n - p 0 1)); 
+# where: p = # of predictors, including the intercept
+#        n = n of observations
+# -----------------------------------------------------------------------------------
+
+model <- lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_dffits_plot(model)
+
+# -----------------------------------------------------------------------------------
+
+## STUDENTIZED RESIDUALS vs LEVERAGE PLOT: DETECT INFLUENTIAL OBSERVATIONS
+# -----------------------------------------------------------------------------------
+model <- lm(read ~ write + math + science, data = hsb)
+ols_rsdlev_plot(model)
+
+# -----------------------------------------------------------------------------------
+
+## HADI PLOT: HADI'S MEASURE OF INFLUENCE BASED ON THE FACT INFLUENTIAL OBSERVATIONS
+#     CAN BE PRESENT IN THE RESPONSE VARIABLE OR PREDICTORS, OR BOTH. 
+# - Detects influential observation according to Hadi's measure
+# -----------------------------------------------------------------------------------
+model <- lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_hadi_plot(model)
+
+
+#####################################################################################
+# 3. BUILD, SUMMARIZE MODEL
 #####################################################################################
 
 # summarizes residuals, ANOVA, parameter estimates in nice chart 
@@ -133,7 +212,7 @@ ols_stepaic_both(model)
 # ols_stepaic_both(model, details = TRUE)
 
 #####################################################################################
-# 3. VARIABLE CONTRIBUTIONS: SHOULD WE ADD ANOTHER VARIABLE? 
+# 4. VARIABLE CONTRIBUTIONS: SHOULD WE ADD ANOTHER VARIABLE? 
 # - Added variable plot: shows marginal importance of predictor variable X_k
 # - Residual plus component plot: shows non-linearity in relationships between X & Y; 
 #         suggests possible transformations for linearizing the data
@@ -168,6 +247,11 @@ ols_avplots(model)
 
 model <- lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
 ols_rpc_plot(model)
+
+
+
+
+
 
 
 #####################################################################################
