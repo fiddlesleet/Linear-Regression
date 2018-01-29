@@ -3,8 +3,8 @@ library(olsrr)
 ############################################################
 # WORKFLOW
 # 1. DETECT OUTLIERS
-# 1. BUILD, SUMMARIZE MODEL
-# 2. VARIABLE CONTRIBUTIONS: SHOULD WE ADD ANOTHER VARIABLE? 
+# 2. BUILD, SUMMARIZE MODEL
+# 3. VARIABLE CONTRIBUTIONS: SHOULD WE ADD ANOTHER VARIABLE? 
 ############################################################
 
 #####################################################################################
