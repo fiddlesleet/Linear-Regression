@@ -48,7 +48,7 @@ ols_rsd_hist(model)
 model <- lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
 ols_rsd_qqplot(model)
 
-# 3. Summarizr Normality Tests: 
+# 3. Summarize Normality Tests: 
 #       Shapiro-Wilk, Kolmogorov-Smirnov, Cramer-von Mises, Anderson-Darling
 ols_norm_test(model)
 
