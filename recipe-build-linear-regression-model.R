@@ -248,10 +248,4 @@ ols_avplots(model)
 model <- lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
 ols_rpc_plot(model)
 
-
-
-
-
-
-
 #####################################################################################
