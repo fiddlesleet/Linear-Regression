@@ -2,12 +2,51 @@ library(olsrr)
 
 ############################################################
 # WORKFLOW
+# 1. DETECT OUTLIERS
 # 1. BUILD, SUMMARIZE MODEL
 # 2. VARIABLE CONTRIBUTIONS: SHOULD WE ADD ANOTHER VARIABLE? 
 ############################################################
 
 #####################################################################################
-# 1. BUILD, SUMMARIZE MODEL
+# 1. DETECT OUTLIERS
+# - Studentized Residual Plot to detect outliers
+# - Standardized Residual Plot to detect outliers
+# - Deleted Studentized Residual vs Fitted Values Plot: Graph for detecting outliers
+#####################################################################################
+
+# -----------------------------------------------------------------------------------
+
+## STUDENTIZED RESIDUAL PLOT: A PLOT TO DETECT OUTLIERS
+# - More effective for detecting outlying Y observations than standardized residuals.
+# - A studentized deleted residual, aka an externally studentized residual, is the 
+#     deleted residual divided by its estimated standard deviation.
+# - If an observation has a studentized residual that is larger than 3 (in absolute 
+#     value), it is an outlier.
+# -----------------------------------------------------------------------------------
+
+model <- lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_srsd_plot(model)
+
+# -----------------------------------------------------------------------------------
+
+## STANDARDIZED RESIDUAL (AKA INTERNALLY STUDENTIZED) PLOT: A PLOT TO DETECT OUTLIERS
+# - A standardized residual is the residual divided by the estimated standard deviation
+# - Less effective for detecting outlying Y observations than studentized residuals.
+# -----------------------------------------------------------------------------------
+
+model <- lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_srsd_chart(model)
+
+# -----------------------------------------------------------------------------------
+
+## DELETED STUDENTIZED RESIDUAL vs. FITTED VALUES PLOT: Graph for detecting outliers
+# -----------------------------------------------------------------------------------
+model <- lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_dsrvsp_plot(model)
+
+
+#####################################################################################
+# 2. BUILD, SUMMARIZE MODEL
 #####################################################################################
 
 # summarizes residuals, ANOVA, parameter estimates in nice chart 
@@ -94,7 +133,7 @@ ols_stepaic_both(model)
 # ols_stepaic_both(model, details = TRUE)
 
 #####################################################################################
-# 2. VARIABLE CONTRIBUTIONS: SHOULD WE ADD ANOTHER VARIABLE? 
+# 3. VARIABLE CONTRIBUTIONS: SHOULD WE ADD ANOTHER VARIABLE? 
 # - Added variable plot: shows marginal importance of predictor variable X_k
 # - Residual plus component plot: shows non-linearity in relationships between X & Y; 
 #         suggests possible transformations for linearizing the data
