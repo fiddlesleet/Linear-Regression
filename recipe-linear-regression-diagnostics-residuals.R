@@ -1,3 +1,5 @@
+library(olsrr)
+
 # STANDARD REGRESSION ASSUMPTIONS
 # Here:
 # 1. Normality assumption: The error has normal distribution
