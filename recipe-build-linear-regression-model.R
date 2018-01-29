@@ -2,14 +2,69 @@ library(olsrr)
 
 ############################################################
 # WORKFLOW
-# 1. DETECT OUTLIERS
-# 2. MEASURES OF INFLUENCE DIAGNOSTICS
-# 3. BUILD, SUMMARIZE MODEL
-# 4. VARIABLE CONTRIBUTIONS: SHOULD WE ADD ANOTHER VARIABLE? 
+# 1. CHECK FOR NORMALITY
+# 2. CHECK IF SAMPLES SHARE THE SAME VARIANCE
+# 3. CHECK IF CATEGORICAL VARS ARE IN/DEPENDENT
+# 4. CHECK IF CORRELATIONS ARE SIGNIFICANT
+# 5. DETECT OUTLIERS
+# 6. BUILD, SUMMARIZE MODEL
+# 7. VARIABLE CONTRIBUTIONS: SHOULD WE ADD ANOTHER VARIABLE? 
 ############################################################
 
 #####################################################################################
-# 1. DETECT OUTLIERS
+# 1. CHECK FOR NORMALITY
+# - Shapiro-Wilk Test: Is data normally distributed?
+# - Kolmogorov-Smirnov test: Do 2 samples follow the same distribution?
+# - Bartlett's, Fligners, or Fisher's F-Test: do 2 samples have same variance? 
+#####################################################################################
+# Shapiro-Wilk Test: 
+#     H_0: sample is normally distributed (p > .05)
+#     H_A: sample is not normally distributed (p < .05)
+shapiro.test(mtcars$mpg) # p > .05, so don't reject H_0--the data is normally distributed
+shapiro.test(mtcars$wt) # p > .09, so also normally distributed
+shapiro.test(mtcars$disp) # p < .05, so reject H_0--the data is NOT normally distributed
+
+# Kolmogorov-Smirnov test: Do 2 samples follow the same distribution?
+#     H_0: sample is normally distributed (p > .05)
+#     H_A: sample is not normally distributed (p < .05)
+ks.test(mtcars$mpg, mtcars$disp) # p < .05: not from same distributions
+x <- rnorm(50)
+y <- rnorm(50)
+ks.test(x, y) # Both from normal distribution
+# Summarize Normality Tests: 
+#       Shapiro-Wilk, Kolmogorov-Smirnov, Cramer-von Mises, Anderson-Darling
+model <- lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
+ols_norm_test(model)
+
+############################################################
+# 2. CHECK IF SAMPLES SHARE THE SAME VARIANCE
+############################################################
+# fisher's f: 
+var.test(mtcars$mpg, mtcars$wt) # p < .05, accept H_A: do not have same variance
+# bartlett's test: 
+#bartlett.test(mtcars$mpg, mtcars$wt) 
+#fligner.test(mtcars$mpg, mtcars$wt) 
+
+###############################################
+# 3. CHECK IF CATEGORICAL VARS ARE IN/DEPENDENT
+###############################################
+# Chi Squared test:
+#   H_0 (p > .05): the variables are independent
+#   H_A (p < .05): the variables are not independent 
+chisq.test(table(mtcars$gear, mtcars$carb))
+
+summary(chisq.test(table(mtcars$gear, mtcars$carb)))
+
+#####################################################################################
+# 4. CHECK IF CORRELATIONS ARE SIGNIFICANT
+# - Also see: corrgram workflow recipe for representing this visually
+#####################################################################################
+# H_0, p > .05: vars are independent
+# H_A, p < .05: vars are dependent
+cor.test(mtcars$mpg, mtcars$hp) # p < .05, dependent 
+
+#####################################################################################
+# 5. DETECT OUTLIERS
 # - Studentized Residual Plot to detect outliers
 # - Standardized Residual Plot to detect outliers
 # - Deleted Studentized Residual vs Fitted Values Plot: Graph for detecting outliers
@@ -47,85 +102,7 @@ ols_dsrvsp_plot(model)
 
 
 #####################################################################################
-# 2. MEASURES OF INFLUENCE DIAGNOSTICS
-# - Cook's D bar plot
-# - DFBETAs Panel
-# - Difference in Fits (DFFIT)
-# - Studentized Residuals vs Leverage plot
-# - Hadi plot
-#####################################################################################
-
-# -----------------------------------------------------------------------------------
-
-## COOK'S D BAR BLOT: identify influential data points in the model
-# -Takes into account both the x and y values of the observation, aka depends on both the
-#   residual & the leverage
-# Steps to compute:
-# 1. Delete observations one at a time
-# 2. refit the regression model on the remaining (n-1) observations
-# 3. Examine how much all of the fitted values change when the ith observation is deleted
-# -----------------------------------------------------------------------------------
-
-# cook's d bar chart
-model <- lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
-ols_cooksd_barplot(model)
-
-# cook's d chart: chart of cook's distance to detect observations that strongly influence
-#   fitted values of the model
-model <- lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
-ols_cooksd_chart(model)
-
-# -----------------------------------------------------------------------------------
-
-## DFBETAs Panel: Measures the difference in each parameter estimate, with and 
-#     without the influential point.
-# -If there are n observations and k variables, there will be n*k DFBETAs.
-# -Large DFBETA value indicates influential observation
-# -Belsey, Kuh, and Welsch recommend 2 as a general cutoff value to indicate influential
-#    observations, and 2/sqrt(n) as a size-adjusted cutoff
-# -----------------------------------------------------------------------------------
-
-# panel
-model <- lm(mpg ~ disp + hp + wt, data = mtcars)
-ols_dfbetas_panel(model)
-
-# -----------------------------------------------------------------------------------
-
-## DIFFERENCE IN FITS (DFFIT): USED TO IDENTIFY INFLUENTIAL DATA POINTS.
-# - The scaled difference between the ith fitted value from the full data,
-#     and the ith fitted value obtained by deleting the ith observation.
-# - STEPS TO COMPUTE:
-# - Delete observations one at a time
-# - Refit the regression model on the remaining observations
-# - Check how much the fitted values cahnge when the ith observation is deleted
-# AN OBSERVATION IS "INFLUENTIAL" IF ITS DFFITS IS GREATER THAN:
-# 2 * (sqrt(p + 1) / (n - p 0 1)); 
-# where: p = # of predictors, including the intercept
-#        n = n of observations
-# -----------------------------------------------------------------------------------
-
-model <- lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
-ols_dffits_plot(model)
-
-# -----------------------------------------------------------------------------------
-
-## STUDENTIZED RESIDUALS vs LEVERAGE PLOT: DETECT INFLUENTIAL OBSERVATIONS
-# -----------------------------------------------------------------------------------
-model <- lm(read ~ write + math + science, data = hsb)
-ols_rsdlev_plot(model)
-
-# -----------------------------------------------------------------------------------
-
-## HADI PLOT: HADI'S MEASURE OF INFLUENCE BASED ON THE FACT INFLUENTIAL OBSERVATIONS
-#     CAN BE PRESENT IN THE RESPONSE VARIABLE OR PREDICTORS, OR BOTH. 
-# - Detects influential observation according to Hadi's measure
-# -----------------------------------------------------------------------------------
-model <- lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
-ols_hadi_plot(model)
-
-
-#####################################################################################
-# 3. BUILD, SUMMARIZE MODEL
+# 6. BUILD, SUMMARIZE MODEL
 #####################################################################################
 
 # summarizes residuals, ANOVA, parameter estimates in nice chart 
@@ -212,7 +189,7 @@ ols_stepaic_both(model)
 # ols_stepaic_both(model, details = TRUE)
 
 #####################################################################################
-# 4. VARIABLE CONTRIBUTIONS: SHOULD WE ADD ANOTHER VARIABLE? 
+# 7. VARIABLE CONTRIBUTIONS: SHOULD WE ADD ANOTHER VARIABLE? 
 # - Added variable plot: shows marginal importance of predictor variable X_k
 # - Residual plus component plot: shows non-linearity in relationships between X & Y; 
 #         suggests possible transformations for linearizing the data
@@ -247,5 +224,6 @@ ols_avplots(model)
 
 model <- lm(mpg ~ disp + hp + wt + qsec, data = mtcars)
 ols_rpc_plot(model)
+
 
 #####################################################################################
