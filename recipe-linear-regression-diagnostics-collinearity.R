@@ -10,11 +10,52 @@ library(olsrr)
 
 ############################################################
 # WORKFLOW
-# 1. COLLINEARITY DIAGNOSTICS
+# 1. REVIEW: COLLINEARITY DEFINITIONS
+# 2. REVIEW: COLLINEARITY CONSEQUENCES
+# 3. REVIEW: HOW TO DETECT COLLINEARITY
+# 4. COLLINEARITY DIAGNOSTICS
 ############################################################
 
 #####################################################################################
-# 1. COLLINEARITY DIAGNOSTICS
+
+## 1. COLLINEARITY DEFINITIONS
+# - Collinearity implies 2 vars are near perfect linear combinations of one another
+# - MULTICOLLINEARITY: involves >2 vars
+# - Occurs when 2+ independent variables are approximately linearly related
+#####################################################################################
+
+
+#####################################################################################
+
+## 2. COLLINEARITY CONSEQUENCES
+# - In the presence of multicollinearity, regresson estimates are unstable, and have
+#     high standard errors, meaning:
+# - OLS estimators are still unbiased, but may have large variances and covariance,
+#     making precise estimation difficult. So, confidence intervals tend to be wider.
+# - t ratios of 1+ coeffs tend to be statistically insignificant
+# - even though some regression coeffs are statistically insignificant, R^2 may be very high
+# - The OLS estimators and their standard errors can be sensitive to small chances in data
+
+#####################################################################################
+
+#####################################################################################
+
+## 3. REVIEW: HOW TO DETECT COLLINEARITY
+# - Check corr. between each pair of independent vars. High corrs may be source of 
+#       multicollinearity. However, pair-wise correlation is sufficient, but not necessary.
+# - Multiple regressions with high R^2 but most coeffs with low p-val may suggest collinearity.
+# - Use VIF: the larger the VIF of X_j, the more collinear X_j is
+#           - if VIF > 10, then R^2 of X_j > .9, and X_j is highly colinear
+# - Farrar-Glauber 3-part test (F-G test):
+#       1. A Chi-square test for whether the Xs are orthogonal 
+#       2. F test for the location of multicollinearity 
+#       3. t-test for the pattern of multicollinearity 
+#
+#####################################################################################
+
+
+#####################################################################################
+# 4. COLLINEARITY DIAGNOSTICS
 # - Variable Inflation Factors (VIF) & Tolerance
 # - Condition Index
 # - Diagnose collinearity
