@@ -4,7 +4,10 @@ library(olsrr)
 # WORKFLOW
 # 1. CHECK FOR NORMALITY
 # 2. CHECK IF SAMPLES SHARE THE SAME VARIANCE
-# 3. CHECK IF CATEGORICAL VARS ARE IN/DEPENDENT
+# 3. CHECK CORRELATONS BETWEEN CATEGORICAL VARIABLES
+#    - CHI SQUARED TEST OF SIGNIFICANCE: IS A PAIR INDEPENDENT OR DEPENDENT OF EACH OTHER?
+#    - GOODMAN'S KRUSKAL TAU FOR STRENGH OF ASSOCIATION: 
+#             CAN THESE VARIABLES PREDICT EACH OTHER? 
 # 4. CHECK IF CORRELATIONS ARE SIGNIFICANT
 # 5. DETECT OUTLIERS
 # 6. BUILD, SUMMARIZE MODEL
@@ -45,15 +48,55 @@ var.test(mtcars$mpg, mtcars$wt) # p < .05, accept H_A: do not have same variance
 #bartlett.test(mtcars$mpg, mtcars$wt) 
 #fligner.test(mtcars$mpg, mtcars$wt) 
 
-###############################################
-# 3. CHECK IF CATEGORICAL VARS ARE IN/DEPENDENT
-###############################################
-# Chi Squared test:
+##########################################################################
+
+# 3. CHECK CORRELATONS BETWEEN CATEGORICAL VARIABLES
+# -TESTING SIGNIFICANCE: IS A PAIR OF CATEGORICAL VARIABLES IN/DEPENDENT?
+# -TESTING STRENGH OF ASSOCIATION: CAN THESE VARIABLES PREDICT EACH OTHER? 
+##########################################################################
+
+#------------------------------------------------------------------------
+# -TESTING SIGNIFICANCE: IS A PAIR OF CATEGORICAL VARIABLES IN/DEPENDENT?
+
+# CHI SQUARED TEST OF SIGNIFICANCE: IS A PAIR INDEPENDENT OR DEPENDENT OF EACH OTHER?
 #   H_0 (p > .05): the variables are independent
 #   H_A (p < .05): the variables are not independent 
+# THE ISSUE WITH CHI SQUARED IS THAT THE MEASURE IS NOT NORMALIZED. 
+#   FOR A MEASURE OF IN/DEPENDENCE FROM 0 TO 1, USE CRAMER'S V.
+#------------------------------------------------------------------------
+# Chi square
 chisq.test(table(mtcars$gear, mtcars$carb))
 
 summary(chisq.test(table(mtcars$gear, mtcars$carb)))
+
+# Cramer's V:
+#    0: Independence
+#    1: Perfectly predictable from each other 
+
+#------------------------------------------------------------------------
+
+# GOODMAN'S KRUSKAL TAU FOR STRENGH OF ASSOCIATION: 
+#   CAN THESE VARIABLES PREDICT EACH OTHER? 
+# tau: the fraction of variability in y that can be explained by x
+# Usage: library(GoodmanKruskal)
+#        GKtauDataframe(): computes GK association between all pairwise combos of vars in df
+# 
+#------------------------------------------------------------------------
+
+library(GoodmanKruskal)
+library(MASS)
+
+GKtau(Cars93$Manufacturer, Cars93$Cylinders) # manufacturer predicts 36% of cylinders; 
+                                             # cylinders predicts 6% of manufacturer 
+
+GKtau(Cars93$Manufacturer, Cars93$Origin) # origin levels: "non-usa" vs "usa"
+
+#for all categorical vars: the variable in the row predicts the var in the col 
+varSet1 <- c("Manufacturer", "Origin", "Cylinders", "EngineSize", "Passengers")
+CarFrame1 <- subset(Cars93, select = varSet1)
+GKmatrix1 <- GKtauDataframe(CarFrame1)
+plot(GKmatrix1)
+
 
 #####################################################################################
 # 4. CHECK IF CORRELATIONS ARE SIGNIFICANT
@@ -62,6 +105,26 @@ summary(chisq.test(table(mtcars$gear, mtcars$carb)))
 # H_0, p > .05: vars are independent
 # H_A, p < .05: vars are dependent
 cor.test(mtcars$mpg, mtcars$hp) # p < .05, dependent 
+
+## FOR NUMERICAL VARIABLES WITH MANY LEVELS, TRY GROUPING INTO QUINTILES AND USE THE GK TAU
+##  TO SEE IF THE STRENGTH OF THE ASSOCIATION STILL HOLDS
+library(GoodmanKruskal)
+library(MASS)
+
+GK_m <- GKtauDataframe(mtcars)
+groupedMpg <- GroupNumeric(mtcars$mpg, n = 5) # n = 5 will get you quintiles, 4 quartiles, etc.
+groupedDisp <- GroupNumeric(mtcars$disp, n = 5)
+groupedHp <- GroupNumeric(mtcars$hp, n = 5)
+groupedDrat <- GroupNumeric(mtcars$drat, n = 5)
+groupedWt <- GroupNumeric(mtcars$wt, n = 5)
+groupedQsec <- GroupNumeric(mtcars$qsec, n = 5)
+df <- data.frame(groupedMpg, groupedDisp, groupedHp, groupedDrat, groupedWt, groupedQsec)
+class(df)
+g <- GKtauDataframe(df)
+plot(g, diagSize = 0.8)
+
+# get outcomes by quintile
+table(groupedQsec, mtcars$vs)
 
 #####################################################################################
 # 5. DETECT OUTLIERS
